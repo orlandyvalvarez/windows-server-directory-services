@@ -2,63 +2,106 @@
 
 Laboratorio práctico de implementación y administración de servicios de infraestructura Windows utilizando VMware Workstation.
 
-El proyecto consiste en la creación de un entorno de dominio basado en Windows Server, con Active Directory, DNS, DHCP y políticas de grupo. El laboratorio se desarrolla en una red virtual aislada para realizar las pruebas sin afectar la red física.
+El proyecto consiste en la construcción de un entorno de laboratorio aislado basado en Windows Server 2025, Active Directory Domain Services, DNS, DHCP y Group Policy. El objetivo fue implementar un dominio funcional, integrar un equipo cliente Windows 10 Pro y comprobar mediante pruebas reales la comunicación, resolución DNS, asignación automática de red, autenticación y aplicación de políticas centralizadas.
 
-## Entorno
+Todo el laboratorio fue desarrollado sobre una red virtual independiente mediante VMware VMnet1, evitando cualquier interacción con la red física utilizada por el equipo.
 
-| Componente             | Configuración       |
-| ---------------------- | ------------------- |
-| Plataforma             | VMware Workstation  |
-| Servidor               | Windows Server 2025 |
-| Cliente                | Windows 10 Pro      |
-| Red                    | VMware VMnet1       |
-| Dominio                | alvarez.local       |
-| Controlador de dominio | DC01-LAB-WS         |
-| IP del servidor        | 192.168.78.10/24    |
-| Cliente                | WIN10-CLIENTE01     |
+## Entorno de laboratorio
 
-## Topología
+| Componente                   | Configuración           |
+| ---------------------------- | ----------------------- |
+| Plataforma de virtualización | VMware Workstation      |
+| Servidor                     | Windows Server 2025     |
+| Cliente                      | Windows 10 Pro          |
+| Red virtual                  | VMware VMnet1 Host-Only |
+| Red                          | 192.168.78.0/24         |
+| Dominio                      | alvarez.local           |
+| NetBIOS                      | ALVAREZ                 |
+| Controlador de dominio       | DC01-LAB-WS             |
+| IP del servidor              | 192.168.78.10/24        |
+| Cliente                      | WIN10-CLIENTE01         |
+| IP obtenida por DHCP         | 192.168.78.101          |
 
-```text
-                    VMnet1
-               192.168.78.0/24
-                      |
-          +-----------+-----------+
-          |                       |
-    DC01-LAB-WS             WIN10-CLIENTE01
- Windows Server 2025          Windows 10 Pro
-    192.168.78.10              Cliente
-          |
-     alvarez.local
-```
+## Arquitectura de red
 
-## Objetivos
-
-* Implementar Windows Server como controlador de dominio.
-* Instalar y configurar Active Directory Domain Services.
-* Configurar DNS para el dominio.
-* Crear unidades organizativas, usuarios y grupos.
-* Integrar un equipo Windows 10 Pro al dominio.
-* Implementar DHCP.
-* Crear y aplicar políticas de grupo mediante GPO.
-* Comprobar la comunicación y autenticación entre servidor y cliente.
-* Documentar las configuraciones y pruebas realizadas.
-
-## Active Directory
-
-El dominio utilizado para el laboratorio es:
+El laboratorio fue construido sobre VMware VMnet1 configurado como red Host-Only. La red virtual permite la comunicación entre las máquinas virtuales y el equipo host, pero permanece separada de la red física.
 
 ```text
-alvarez.local
+                         VMware VMnet1
+                        192.168.78.0/24
+                               |
+                +--------------+--------------+
+                |                             |
+                |                             |
+        DC01-LAB-WS                    WIN10-CLIENTE01
+      Windows Server 2025               Windows 10 Pro
+        192.168.78.10                  192.168.78.101
+                |                             |
+                |                             |
+        Active Directory                Usuario de dominio
+        DNS / DHCP / GPO                ALVAREZ\orlandy
+                |
+          alvarez.local
 ```
 
-El controlador de dominio es:
+No se configuró una puerta de enlace en esta red debido a que el laboratorio no requiere acceso hacia Internet ni hacia otras redes.
+
+## Objetivos del laboratorio
+
+El laboratorio fue desarrollado para implementar y comprobar un entorno básico de administración de infraestructura Windows.
+
+Se implementó Windows Server 2025 como controlador de dominio, se instaló Active Directory Domain Services, se configuró DNS, se crearon unidades organizativas, usuarios y grupos de seguridad, se integró un cliente Windows 10 Pro al dominio, se implementó DHCP y se creó una política de grupo para controlar el acceso al Panel de control.
+
+Finalmente, se realizaron pruebas para comprobar el funcionamiento de los diferentes servicios.
+
+## Configuración del servidor
+
+El servidor fue configurado con el nombre:
 
 ```text
 DC01-LAB-WS
 ```
 
-La estructura organizativa implementada es:
+El sufijo DNS principal utilizado fue:
+
+```text
+alvarez.local
+```
+
+La configuración IPv4 del servidor quedó establecida de forma estática:
+
+```text
+IP:        192.168.78.10
+Máscara:   255.255.255.0
+Gateway:   No configurado
+DNS:       127.0.0.1
+```
+
+La dirección IP estática permite que el servidor mantenga una dirección conocida dentro de la infraestructura del dominio.
+
+## Active Directory Domain Services
+
+Se instaló y configuró Active Directory Domain Services en Windows Server 2025.
+
+El dominio implementado es:
+
+```text
+alvarez.local
+```
+
+El controlador de dominio corresponde a:
+
+```text
+DC01-LAB-WS.alvarez.local
+```
+
+También se configuró el nombre NetBIOS del dominio:
+
+```text
+ALVAREZ
+```
+
+La estructura organizativa creada en Active Directory es:
 
 ```text
 alvarez.local
@@ -70,43 +113,44 @@ alvarez.local
 +-- Ventas
 ```
 
-Se configuraron grupos de seguridad para la administración de usuarios:
+Dentro de la administración de usuarios se crearon los grupos de seguridad:
 
 ```text
 IT-Admins
 IT-Users
 ```
 
-Usuario de prueba:
+Se creó el usuario de prueba:
+
+```text
+Orlandy Vilorio
+```
+
+con la cuenta de dominio:
 
 ```text
 ALVAREZ\orlandy
 ```
 
-## Configuración de red
-
-El controlador de dominio utiliza una dirección IP estática:
+El usuario fue asociado al grupo:
 
 ```text
-IP:        192.168.78.10
-Máscara:   255.255.255.0
-Gateway:   No configurado
-DNS:       127.0.0.1
+IT-Users
 ```
 
-El laboratorio utiliza VMware VMnet1 en modo Host-Only. De esta manera, las máquinas virtuales pueden comunicarse entre ellas dentro de una red independiente de la red física.
+También se realizó el primer inicio de sesión utilizando las credenciales del dominio y se comprobó posteriormente la identidad mediante `whoami`.
 
 ## DNS
 
-DNS se configuró como parte de la infraestructura del dominio.
+DNS fue implementado como parte de la infraestructura del controlador de dominio.
 
-El cliente utiliza el controlador de dominio como servidor DNS:
+El cliente Windows 10 utiliza al controlador de dominio como servidor DNS:
 
 ```text
 192.168.78.10
 ```
 
-Se realizaron pruebas de resolución mediante:
+Se realizaron pruebas de resolución utilizando:
 
 ```cmd
 nslookup alvarez.local
@@ -118,23 +162,41 @@ y:
 nslookup dc01-lab-ws.alvarez.local
 ```
 
-La resolución permitió al cliente localizar los servicios del dominio y completar correctamente la integración con Active Directory.
+Las consultas permitieron comprobar que el cliente podía resolver correctamente el dominio y el nombre del controlador de dominio.
 
-## Unión del cliente al dominio
+La correcta resolución DNS fue necesaria para completar la integración del cliente con Active Directory.
 
-El equipo:
+## Configuración del cliente Windows 10
+
+Se implementó una máquina virtual independiente con Windows 10 Pro debido a que la edición Home no permite la integración con un dominio de Active Directory.
+
+El equipo fue configurado con el nombre:
 
 ```text
 WIN10-CLIENTE01
 ```
 
-fue incorporado al dominio:
+La máquina virtual fue conectada exclusivamente a:
+
+```text
+VMnet1
+```
+
+El cliente fue configurado inicialmente para utilizar el servidor:
+
+```text
+192.168.78.10
+```
+
+como servidor DNS.
+
+Después de comprobar la conectividad y resolución DNS, el equipo fue incorporado correctamente al dominio:
 
 ```text
 alvarez.local
 ```
 
-La autenticación con una cuenta de dominio fue comprobada mediante:
+El inicio de sesión con la cuenta de dominio fue comprobado mediante:
 
 ```cmd
 whoami
@@ -146,78 +208,176 @@ Resultado:
 alvarez\orlandy
 ```
 
-Esto confirma que el cliente utiliza Active Directory para la autenticación del usuario.
+Esto confirmó que el equipo cliente estaba autenticando correctamente contra Active Directory.
 
 ## DHCP
 
-Se implementó el servicio DHCP en Windows Server para proporcionar automáticamente la configuración de red a los equipos clientes.
+Se instaló y configuró el rol DHCP en Windows Server.
 
-El ámbito DHCP utiliza la red:
+El ámbito creado fue:
+
+```text
+DHCP-LAB
+```
+
+Utilizando la red:
 
 ```text
 192.168.78.0/24
 ```
 
-La configuración incluye:
+El rango configurado fue:
 
-* Rango de direcciones IP.
-* Máscara de subred.
-* Exclusiones necesarias.
-* Servidor DNS.
-* Dominio `alvarez.local`.
+```text
+192.168.78.100 - 192.168.78.200
+```
 
-El cliente Windows 10 fue configurado para obtener automáticamente su dirección IP y posteriormente se verificó la asignación mediante:
+La máscara utilizada fue:
+
+```text
+255.255.255.0
+```
+
+Las opciones DHCP configuradas incluyeron el servidor DNS:
+
+```text
+192.168.78.10
+```
+
+y el dominio:
+
+```text
+alvarez.local
+```
+
+No se configuró una puerta de enlace porque el laboratorio está diseñado como una red aislada y no requiere salida hacia otras redes.
+
+El ámbito DHCP fue activado y posteriormente el cliente Windows 10 fue configurado para obtener automáticamente su configuración de red.
+
+La asignación fue comprobada mediante:
 
 ```cmd
 ipconfig /all
 ```
 
-La renovación de la configuración DHCP fue comprobada mediante:
+El cliente recibió:
+
+```text
+IPv4:          192.168.78.101
+Máscara:       255.255.255.0
+DHCP Server:   192.168.78.10
+DNS Server:    192.168.78.10
+Dominio:       alvarez.local
+Gateway:       No configurado
+```
+
+También se comprobó la renovación de la configuración mediante:
 
 ```cmd
 ipconfig /release
 ipconfig /renew
 ```
 
+Esto permitió verificar que Windows Server estaba funcionando como servidor DHCP para el cliente.
+
 ## Group Policy
 
-Se implementaron políticas de grupo mediante Group Policy Management.
+Se implementó una política de grupo mediante Group Policy Management.
 
-Las políticas fueron vinculadas a las unidades organizativas correspondientes y probadas desde el equipo cliente.
+La política creada fue:
 
-La aplicación de las políticas fue comprobada mediante:
+```text
+GPO-IT-Restriccion-Panel
+```
+
+La GPO fue vinculada a la unidad organizativa:
+
+```text
+IT
+```
+
+La configuración aplicada se encuentra en:
+
+```text
+Configuración de usuario
+→ Directivas
+→ Plantillas administrativas
+→ Panel de control
+```
+
+La política configurada fue:
+
+```text
+Prohibir el acceso al Panel de control y a Configuración del PC
+```
+
+La política fue establecida como:
+
+```text
+Habilitada
+```
+
+Después de realizar la configuración, se actualizó la directiva en el cliente mediante:
 
 ```cmd
 gpupdate /force
 ```
 
-y:
+Posteriormente se verificó la aplicación de la política utilizando:
 
 ```cmd
 gpresult /r
 ```
 
-Estas pruebas permitieron verificar que las configuraciones definidas en el controlador de dominio fueran recibidas correctamente por el equipo cliente.
+El resultado confirmó que la GPO:
+
+```text
+GPO-IT-Restriccion-Panel
+```
+
+fue aplicada al usuario:
+
+```text
+Orlandy Vilorio
+```
+
+La salida de `gpresult` mostró además que la última aplicación de directivas se realizó desde:
+
+```text
+DC01-LAB-WS.alvarez.local
+```
 
 ## Pruebas realizadas
 
-### Conectividad
+### Prueba de conectividad
+
+Se comprobó la comunicación entre el cliente y el controlador de dominio mediante:
 
 ```cmd
 ping 192.168.78.10
 ```
 
-Se comprobó la comunicación entre el cliente y el controlador de dominio.
+La prueba confirmó la comunicación dentro de la red virtual.
 
-### Resolución DNS
+### Prueba de resolución DNS
+
+Se realizaron consultas mediante:
 
 ```cmd
 nslookup alvarez.local
 ```
 
-Se verificó la resolución del dominio.
+y:
 
-### Autenticación
+```cmd
+nslookup dc01-lab-ws.alvarez.local
+```
+
+Las pruebas confirmaron la resolución de nombres mediante el servidor DNS del dominio.
+
+### Prueba de autenticación
+
+Se verificó la cuenta utilizada en el cliente mediante:
 
 ```cmd
 whoami
@@ -229,7 +389,9 @@ Resultado:
 alvarez\orlandy
 ```
 
-### Nombre del equipo
+### Prueba del nombre del equipo
+
+Se verificó el nombre del cliente mediante:
 
 ```cmd
 hostname
@@ -241,59 +403,90 @@ Resultado:
 WIN10-CLIENTE01
 ```
 
-### Configuración DHCP
+### Prueba de DHCP
+
+Se verificó la configuración recibida automáticamente mediante:
 
 ```cmd
 ipconfig /all
 ```
 
-Se verificó la configuración obtenida mediante DHCP.
+El cliente obtuvo correctamente una dirección dentro del ámbito DHCP configurado en Windows Server.
 
-### Actualización de políticas
+### Prueba de actualización de políticas
+
+Se ejecutó:
 
 ```cmd
 gpupdate /force
 ```
 
-### Verificación de GPO
+para forzar la actualización de las políticas de grupo.
+
+### Verificación de aplicación de GPO
+
+Se ejecutó:
 
 ```cmd
 gpresult /r
 ```
 
-Se verificó la aplicación de las políticas configuradas desde Active Directory.
+El resultado confirmó la aplicación de:
 
-## Resultados
+```text
+GPO-IT-Restriccion-Panel
+```
 
-El laboratorio permitió implementar un entorno funcional de administración centralizada basado en Windows Server.
+La política fue aplicada desde:
 
-Se configuró un controlador de dominio con Active Directory y DNS, se incorporó un equipo Windows 10 Pro al dominio, se implementó DHCP y se aplicaron políticas mediante Group Policy.
+```text
+DC01-LAB-WS.alvarez.local
+```
 
-Las pruebas realizadas confirmaron:
+## Resultado final
 
-* Comunicación entre servidor y cliente.
-* Resolución DNS.
-* Autenticación mediante Active Directory.
-* Integración del equipo cliente al dominio.
-* Asignación automática de configuración de red mediante DHCP.
-* Aplicación de políticas de grupo.
+El laboratorio quedó funcionando como un entorno de infraestructura Windows basado en dominio.
+
+Windows Server 2025 opera como controlador de dominio y proporciona los servicios de Active Directory, DNS y DHCP. El equipo Windows 10 Pro se encuentra integrado al dominio `alvarez.local`, obtiene su configuración de red mediante DHCP, utiliza el controlador de dominio como servidor DNS y permite la autenticación mediante cuentas de Active Directory.
+
+También se implementó una política de grupo vinculada a la OU `IT` y se comprobó mediante `gpresult` que la política fue recibida correctamente por el usuario de prueba.
+
+El entorno permanece aislado mediante VMware VMnet1, por lo que las pruebas se realizaron sin modificar ni depender de la red física.
 
 ## Evidencias
 
-Las principales evidencias del laboratorio incluyen:
+La documentación del proyecto incluye capturas correspondientes a las principales etapas de implementación y validación.
 
-* Configuración IP del servidor.
-* Configuración de VMnet1.
-* Active Directory Users and Computers.
-* Unidades organizativas.
-* Usuarios y grupos.
-* Configuración DNS.
-* Configuración DHCP.
-* Unión del cliente al dominio.
-* Inicio de sesión con usuario de dominio.
-* Configuración obtenida mediante DHCP.
-* Configuración de Group Policy.
-* Resultado de `gpupdate`.
-* Resultado de `gpresult`.
-* Pruebas de conectividad y resolución DNS.
+```text
+evidencias/
+|
++-- 01-vmware-vmnet1.png
++-- 02-server-ip.png
++-- 03-active-directory.png
++-- 04-dns.png
++-- 05-dhcp.png
++-- 06-cliente-dominio.png
++-- 07-dhcp-client.png
++-- 08-gpo-creada.png
++-- 09-gpupdate.png
++-- 10-gpo-aplicada.png
+```
 
+Las evidencias permiten comprobar visualmente la configuración de VMware, la infraestructura del servidor, Active Directory, DNS, DHCP, la integración del cliente al dominio y la aplicación de Group Policy.
+
+## Tecnologías utilizadas
+
+```text
+Windows Server 2025
+Windows 10 Pro
+Active Directory Domain Services
+DNS
+DHCP
+Group Policy
+VMware Workstation
+VMware VMnet1
+IPv4
+PowerShell / CMD
+```
+
+##
